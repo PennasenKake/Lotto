@@ -1,0 +1,186 @@
+
+<!--TÄMÄ ON KIRJOITETTU RIVIRIVILTÄ NETISTÄ-->
+
+<!--ALLA LINKKI ALKUPERÄISEEN-->
+<!--https://codepen.io/funxer/pen/wPwzvo-->
+
+<!--kirjoittaessa huomasin alkuperäisestä rivi-rivikirjoittaessa
+    divien rivitys tai tabulointi ei onnistunut,
+    sitten sain tehdä eri tavalla esim efektit ja pallot
+    ja niiden näkyvyys oli uutta mitä vaikka kursseilla
+
+    LOTTO tehtävät kiehotovat
+
+     bootstrap linkit liitetty muualta ja kommentoitiin käytetty apuna
+     chatgptä ja oikolukemiseen, koska kirjoitusvirheitä saattoi olla-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lotto</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+    <style>
+        /* SIVUN TAUSTA VÄRI*/
+        body {
+            background: #479a70;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, .7);
+            box-shadow: 0 0 5px black;
+        }
+
+        /* NÄYTÄ TAI PIILOTA ELEMENTTI CSS-TARNSITIOLLA*/
+        .max-opacity {
+            opacity: 1 !important;
+            transition: opacity 2s;
+        }
+        /* ALKUTILA TULOKSILLE*/
+        #result-row {
+            opacity: 0;
+        }
+        /* TYYLIT LOTTONUMEROILLE*/
+        .numbers {
+            min-height: 100px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .nr {
+            font-family: sans-serif;
+            text-align: center;
+            margin: 5px;
+            background: #ecd383;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: inset 5px -5px 15px rgba(0, 0, 0, .8),
+                        inset -5px 5px 5px rgba(0, 0, 0, .2),
+                        0 0 10px black;
+            color: #333;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            border-radius: 50%;
+            border: 2px solid black;
+            transform: scale(1.0);
+            opacity: 1;
+            transition: transform 1s linear, opacity 1s linear;
+        }
+
+        .nr.init {
+            transform: scale(2);
+            opacity: 0;
+        }
+        /* AKTIIVISET LOTTONUMEROT*/
+
+        .nr.active {
+            transition: all 3s ease-out;
+            background: #f77;
+            transform: scale(1.2);
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let interval;
+
+            /* FUNKTIO JOKA GENEROI LOTTONUMEROT*/
+            function generate(e) {
+                if (e) e.preventDefault();
+                const qs = (v) => document.querySelector(v);
+                const amountOfNumbers = parseInt(qs('#max-numbers').value, 10);
+                const amountToSelect = parseInt(qs('#numbers-to-pick').value, 10);
+                const numbersContainer = qs('.numbers');
+                const allNumbers = [];
+                let created = 0;
+
+                /* TARKISTETAAN NUMEROIDEN KELVOLLISUUS*/
+                if (isNaN(amountOfNumbers) || isNaN(amountToSelect) || amountOfNumbers <= 0 || amountToSelect <= 0 || amountToSelect > amountOfNumbers) return;
+
+                clearInterval(interval);
+
+                /* TYHJENNETÄÄN AIEMMAT NUMEROT*/
+                while (numbersContainer.lastChild) {
+                    numbersContainer.removeChild(numbersContainer.lastChild);
+                }
+
+                qs('#result-row').classList.remove('max-opacity');
+
+                interval = setInterval(() => {
+                    if (created < amountOfNumbers) {
+                        if (created > 0) {
+                            numbersContainer.lastChild.classList.remove('init');
+                        }
+                        const element = document.createElement('div');
+                        const number = created + 1;
+                        element.innerHTML = number;
+                        element.className = 'nr init';
+                        numbersContainer.appendChild(element);
+                        created += 1;
+                        allNumbers.push({ element, number });
+                    } else {
+                        numbersContainer.lastChild.classList.remove('init');
+                        clearInterval(interval);
+                        const winningNumbers = [];
+                        const temp = [...allNumbers];
+                        // ARVOTAAN VOITTONUMEROT
+                        for (let i = 0; i < amountToSelect; i++) {
+                            const idx = Math.floor(Math.random() * temp.length);
+                            temp[idx].element.classList.add('active');
+                            winningNumbers.push(temp.splice(idx, 1)[0]);
+                        }
+                        //NÄYTETÄÄN VOITTONUMEROT JA LAJITELLAAN NE
+                        qs('#result-row').classList.add('max-opacity');
+                        qs('#result').innerText = winningNumbers
+                            .map(nr => nr.number)
+                            .sort((a, b) => a - b)
+                            .join(', ');
+                    }
+                }, 40);
+            }
+
+            generate();
+            //ARPOTMIS PAINIKKEEN KUUNTELIJA
+            qs('.btn').addEventListener('click', generate);
+        });
+    </script>
+</head>
+<body>
+    <!--SIVUNSISÄLTÖ--> 
+    <div class='container my-1 rounded'>
+        <form class='row' onsubmit='generate(event)'>
+            <!--SYÖTTÖKENTÄT MAX JA VALITTAVILLE NUMEROILLE--> 
+            <div class='col-12 col-xl-4'>
+                <div class='form-group'>
+                    <label for='max-numbers'>Maxium numbers</label>
+                    <input id='max-numbers' class='form-control' type='number' size='2' min='1' max='100' value='40'>
+                </div>
+            </div>
+            <div class='col-12 col-xl-4'>
+                <div class='form-group'>
+                    <label for='numbers-to-pick'>Numbers to pick</label>
+                    <input id='numbers-to-pick' class='form-control' type='number' size='2' min='1' max='100' value='7'>
+                </div>
+            </div>
+            <div class='col-12 col-xl-4'>
+                <!--ARPOMISPAINIKE--> 
+                <label>&nbsp;</label>
+                <button class='btn btn-primary form-control'>Generate</button>
+            </div>
+        </form>
+        <!--TULOSTETAAN NÄYTTÖALUE--> 
+        <div class='row mt-3 mt-xl-0' id='result-row'>
+            <div class='col-12'>
+                <h6 class='d-inline-block text-muted'>Your lucky numbers are</h6>
+                <h3 id='result' class='d-inline-block ml-1'></h3>
+            </div>
+            <!--ALUE JOHON LOTTONUMEROT TULEVAT--> 
+            <div class='numbers'></div>
+        </div>
+    </div>
+</body>
+</html>
